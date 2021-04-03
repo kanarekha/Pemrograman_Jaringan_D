@@ -1,7 +1,7 @@
 import sys
 import socket
 
-ip = ['192.168.122.221', '192.168.122.255']
+ip = ['192.168.122.42', '192.168.122.236']
 for i in ip:
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
