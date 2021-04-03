@@ -2,7 +2,10 @@ import sys
 import socket
 
 ip = ['192.168.122.42', '192.168.122.236']
+count = 0
+
 for i in ip:
+
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
