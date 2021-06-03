@@ -1,5 +1,7 @@
 import sys
 import socket
+import string
+import random
 
 ip = ['192.168.122.223', '192.168.122.204']
 
