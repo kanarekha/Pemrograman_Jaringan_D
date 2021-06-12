@@ -2,10 +2,13 @@ import socket
 import json
 import base64
 import logging
+import threading
+import time
+import datetime
 
-server_address=('0.0.0.0',7777)
+server_address=('0.0.0.0',6666)
 
-def send_command(command_str=""):
+def send_command(command_str="", count=None):
     global server_address
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(server_address)
@@ -29,7 +32,7 @@ def send_command(command_str=""):
         # at this point, data_received (string) will contain all data coming from the socket
         # to be able to use the data_received as a dict, need to load it using json.loads()
         hasil = json.loads(data_received)
-        logging.warning("data received from server:")
+        logging.warning(f"{count} - data received from server:")
         return hasil
     except:
         logging.warning("error during data receiving")
@@ -48,12 +51,12 @@ def remote_list():
         print("Gagal")
         return False
 
-def remote_get(filename=""):
+def remote_get(filename="", count=None):
     command_str=f"GET {filename}"
     hasil = send_command(command_str)
     if (hasil['status']=='OK'):
         #proses file dalam bentuk base64 ke bentuk bytes
-        namafile= hasil['data_namafile']
+        namafile= hasil['data_namafile'] + " " + str(count)
         isifile = base64.b64decode(hasil['data_file'])
         fp = open(namafile,'wb+')
         fp.write(isifile)
@@ -63,9 +66,26 @@ def remote_get(filename=""):
         print("Gagal")
         return False
 
+def get_image(filename="",count=""):
+    texec =dict()
+    waktu_mulai = datetime.datetime.now()
+    for k in range(count):
+        print(" iterasi- ", k, "download", filename)
+        waktu = time.time()
+        texec[k] = threading.Thread(target=remote_get, args=(filename,k))
+        texec[k].start()
+
+    for k in range(count):
+        texec[k].join()
+
+    waktu_akhir = datetime.datetime.now()
+    durasi = waktu_akhir - waktu_mulai
+    print(f"Waktu yang dibutuhkan {durasi} detik")
+
+
 
 if __name__=='__main__':
     server_address=('0.0.0.0',6666)
-    remote_list()
-    #remote_get('donalbebek.jpg')
+    #remote_list()
+    get_image('donalbebek.jpg', 100)
 
