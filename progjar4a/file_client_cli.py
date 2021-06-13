@@ -3,12 +3,13 @@ import json
 import base64
 import logging
 import threading
+from multiprocessing import Process
 import time
 import datetime
 
-server_address=('0.0.0.0',6666)
+server_address=('192.168.122.0',5005)
 
-def send_command(command_str="", count=None):
+def send_command(command_str=""):
     global server_address
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(server_address)
@@ -32,7 +33,7 @@ def send_command(command_str="", count=None):
         # at this point, data_received (string) will contain all data coming from the socket
         # to be able to use the data_received as a dict, need to load it using json.loads()
         hasil = json.loads(data_received)
-        logging.warning(f"{count} - data received from server:")
+        logging.warning("data received from server:")
         return hasil
     except:
         logging.warning("error during data receiving")
@@ -51,12 +52,13 @@ def remote_list():
         print("Gagal")
         return False
 
-def remote_get(filename="", count=None):
+def remote_get(filename=""):
     command_str=f"GET {filename}"
     hasil = send_command(command_str)
+
     if (hasil['status']=='OK'):
         #proses file dalam bentuk base64 ke bentuk bytes
-        namafile= hasil['data_namafile'] + " " + str(count)
+        namafile= hasil['data_namafile']
         isifile = base64.b64decode(hasil['data_file'])
         fp = open(namafile,'wb+')
         fp.write(isifile)
@@ -66,26 +68,29 @@ def remote_get(filename="", count=None):
         print("Gagal")
         return False
 
-def get_image(filename="",count=""):
+def remote_get_image(filename=""):
     texec =dict()
-    waktu_mulai = datetime.datetime.now()
-    for k in range(count):
-        print(" iterasi- ", k, "download", filename)
+    catat_awal = datetime.datetime.now()
+
+    for k in range(100):
+        print("download file-", k, filename)
         waktu = time.time()
-        texec[k] = threading.Thread(target=remote_get, args=(filename,k))
+        # bagian ini merupakan bagian yang mengistruksikan eksekusi fungsi download gambar secara multiprocess
+        texec[k] = Process(target=remote_get, args=(filename,))
         texec[k].start()
 
-    for k in range(count):
+    # setelah menyelesaikan tugasnya, dikembalikan ke main process dengan join
+    for k in range(100):
         texec[k].join()
 
-    waktu_akhir = datetime.datetime.now()
-    durasi = waktu_akhir - waktu_mulai
-    print(f"Waktu yang dibutuhkan {durasi} detik")
+    catat_akhir = datetime.datetime.now()
+    selesai = catat_akhir - catat_awal
+    print(f"Waktu TOTAL yang dibutuhkan {selesai} detik {catat_awal} s/d {catat_akhir}")
 
 
-
+#fungsi download_gambar akan dijalankan secara multi process
 if __name__=='__main__':
-    server_address=('0.0.0.0',6666)
+    server_address=('192.168.122.0',5005)
     #remote_list()
-    get_image('donalbebek.jpg', 100)
+    remote_get_image('pokijan.jpg')
 
